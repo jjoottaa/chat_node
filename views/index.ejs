@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Chat - Customer Module</title>
+<!--<link type="text/css" rel="stylesheet" href="/static/style.css" />-->
+</head>
+ 
+<div id="wrapper">    
+    <div id="menu" >
+        <p class="welcome">Bienvenid@<b></b></p>     
+    </div>
+    <div id="chatbox"></div>
+    <div id="escribiendo"></div>
+    <div id="cuerpo">
+        <form name="message" action="">     
+            <label> Usuario</label> 
+            <div class="col-sm-9 form-group ">
+                <input name="user" type="text" id="user" value="<%= data %>" disabled/>
+            </div>
+            <label class="control-label"> Mensaje</label> 
+            <div class="col-sm-9 form-group ">
+                <textarea name="msg" type="text" id="msg" ></textarea>
+            </div>        
+            <input name="submitmsg" type="submit"  id="submitmsg" value="Enviar" />
+        </form>
+        <input type="hidden" id="oculto_mensaje" value='0' />
+    </div>    
+</div>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3/jquery.min.js"></script>
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+<script type="text/javascript">
+    let socket = io();
+
+    //se referencian los elementos
+    const form = document.querySelector('form');
+    const input_msg = document.getElementById('msg');
+    const input_usr = document.getElementById('user');
+    const aux = document.getElementById('escribiendo');
+    const aux_mensaje = document.getElementById('oculto_mensaje');
+
+    //let mensajes = document.querySelector('spam');
+    let mensajes = document.getElementById('chatbox');
+
+    form.addEventListener('submit' , (e)=>{
+        e.preventDefault();
+        if(input_usr.value){
+            if(input_msg.value){
+                var today = new Date();
+                var now = today.toLocaleString();
+                const cadena=""+input_usr.value+ " ("+ now +") : "+input_msg.value+"\n";
+                socket.emit('chat', cadena);
+                input_msg.value='';
+                input_usr.disabled = true;
+            }else{
+                alert('Debe agregar mensaje');
+            }
+        }else{
+            alert('Debe agregar usuario de mensaje');
+        }
+    });
+
+    socket.on('chat', (msg)=>{
+        let item =document.createElement('li');
+        item.textContent=msg;
+        mensajes.appendChild(item);
+        window.scrollto(0,document.body.scrollHeight);
+    });
+
+    
+    $('#msg').keypress((e)=>{   
+        if($("#msg").val() != ""){
+            console.log('aca');
+            if(e.which != 13){
+                escribiendo = true;
+                socket.emit('escribiendo', {usuario:input_usr.value, escribiendo:true});
+                //clearTimeout(timeout);
+                //timeout = setTimeout(finTiempoEscritura, 100);
+            }else {
+                //clearTimeout(timeout);
+                //finTiempoEscritura();
+                //enviarMensaje();
+            }
+        }
+    });
+
+    socket.on('display', (datos)=>{ 
+        console.log(datos);
+        // $('.escribiendo').text(datos.usuario);
+         
+        if(datos.escribiendo == true) {    
+            if (document.hasFocus()) {
+                setTimeout(function() {
+                    $('#escribiendo').fadeOut('fast');
+                }, 1500)  
+            }else {
+                if( aux_mensaje.value == 0){ 
+                    let ele =document.createElement('label');
+                    ele.textContent=`${datos.usuario} esta escribiendo...`;
+                    aux.appendChild(ele);
+                    $('#escribiendo').show();
+                    aux_mensaje.value=1;
+                }
+               
+                setTimeout(function() {
+                    $('#escribiendo').fadeOut('fast');
+                    aux.removeChild(aux.firstChild);
+                    aux_mensaje.value=0;
+                }, 1500)   
+            }     
+        }
+        
+    });
+
+
+// jQuery Document
+$(document).ready(function(){
+console.log('llega');
+});
+</script>
+</body>
+</html>
+
+<style>
+    /* CSS Document */
+    body {
+        font:12px arial;
+        color: #222;
+        text-align:left;
+        background-color: #080710;   
+    }
+    
+    #escribiendo{
+        text-align: center;
+    }
+      
+    form, p, span {
+        margin:0;
+        padding:0; }
+      
+    
+      
+    
+      
+    #wrapper {
+        margin:0 auto;
+        padding-bottom:25px;
+        background:#EBF4FB;
+        width:504px;
+        border:1px solid #ACD8F0; }
+      
+      
+    #chatbox {
+        text-align:left;
+        margin:0 auto;
+        margin-bottom:25px;
+        padding:10px;
+        background:#fff;
+        height:270px;
+        width:430px;
+        border:1px solid #ACD8F0;
+        overflow:auto; }
+      
+    #user {
+        width:90%;
+        
+        border:1px solid #ACD8F0; }
+    #msg {
+        width:90%;
+        border:1px solid #ACD8F0; }
+      
+    
+      
+    
+      
+    #menu { padding:12.5px 25px 12.5px 25px; }
+    
+    #cuerpo { 
+        margin-left: 5%;
+        margin-right: -3%; 
+    }
+        
+    
+    li {list-style:none; font-size:12px;}
+</style>
